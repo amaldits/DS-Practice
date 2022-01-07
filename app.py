@@ -42,85 +42,70 @@ with col2:
     st.subheader('Variance')
     st.write(np.var(full_health_data))
 
+chart_type = st.selectbox('Choose your chart type', plot_types)
 col3, col4 = st.columns(2)
+
 with col3:
-    st.subheader('Linear Regression')
-    chart_type = st.selectbox('Choose your chart type', plot_types)
+    st.subheader('Linear Regression Calorie_Burnage ~ Average_Pulse')
     plot = matplotlib_plot(chart_type, full_health_data)
     st.pyplot(plot)
-    
-with col4:    
-    st.subheader('Regression Table')
+
+    st.subheader('Regression Table Calorie_Burnage ~ Average_Pulse')
     model = smf.ols('Calorie_Burnage ~ Average_Pulse', data = full_health_data)
     results = model.fit()
     st.write(results.summary())
 
-with col3:
     string = 'Calorie_Burnage = ' + str(results.params['Average_Pulse']) + ' x Average_Pulse + ' + str(results.params['Intercept'])
     st.write('The linear regression function can be written mathematically as:')
     st.markdown('**' + string + '**')
+    st.write("""
+                _Summary - Predicting Calorie_Burnage with Average_Pulse_\n
+                    - Coefficient of 0.3296, which means that Average_Pulse has a very small effect on Calorie_Burnage.\n
+                    - High P-value (0.824), which means that we cannot conclude a relationship between Average_Pulse and Calorie_Burnage.\n
+                    - R-Squared value of 0, which means that the linear regression function line does not fit the data well.\n
+            """)
 
+with col4:
+    st.subheader('Linear Regression Calorie_Burnage ~ Average_Pulse + Duration')
 
+    fig, ax = plt.subplots()
 
+    x = full_health_data["Duration"] + full_health_data["Average_Pulse"]
+    y = full_health_data ["Calorie_Burnage"]
 
-# pd.set_option('display.max_columns',None)
-# pd.set_option('display.max_rows',None)
+    slope, intercept, r, p, std_err = stats.linregress(x, y)
 
-# print(full_health_data.describe())
+    def myfunc(x):
+        return slope * x + intercept
 
-# # .......... # .......... # .......... # .......... # .......... # .......... #
+    mymodel = list(map(myfunc, x))
 
-# Max_Pulse = full_health_data["Max_Pulse"]
-# percentile10 = np.percentile(Max_Pulse, 10)
-# print(" ")
-# print(percentile10)
+    plt.scatter(x, y)
+    plt.plot(x, mymodel)
+    plt.ylim(ymin=0, ymax=2000)
+    plt.xlim(xmin=0, xmax=200)
+    plt.xlabel("Duration")
+    plt.ylabel ("Calorie_Burnage")
 
-# # .......... # .......... # .......... # .......... # .......... # .......... #
+    st.pyplot(fig)
 
-# std = np.std(full_health_data)
-# print(" ")
-# print(std)
-# cv = np.std(full_health_data) / np.mean(full_health_data)
-# print(" ")
-# print(cv)
-# var = np.var(full_health_data)
-# print(" ")
-# print(var)
-# Corr_Matrix = round(full_health_data.corr(),2)
-# print(Corr_Matrix)
+    st.subheader('Regression Table Calorie_Burnage ~ Average_Pulse + Duration')
+    new_model = smf.ols('Calorie_Burnage ~ Average_Pulse + Duration', data = full_health_data)
+    new_results = new_model.fit()
+    st.write(new_results.summary())
 
-# # .......... # .......... # .......... # .......... # .......... # .......... #
-
-# x = full_health_data["Average_Pulse"]
-# y = full_health_data["Calorie_Burnage"]
-
-# slope, intercept, r, p, std_err = stats.linregress(x, y)
-
-# def myfunc(x):
-#     return slope * x + intercept
-
-# mymodel = list(map(myfunc, x))
-
-# plt.scatter(x, y)
-# plt.plot(x, mymodel)
-# plt.ylim(ymin=0, ymax=2000)
-# plt.xlim(xmin=0, xmax=200)
-# plt.xlabel("Average_Pulse")
-# plt.ylabel ("Calorie_Burnage")
-# plt.savefig("regression.png")
-
-# # .......... # .......... # .......... # .......... # .......... # .......... #
-
-# model = smf.ols('Calorie_Burnage ~ Average_Pulse', data = full_health_data)
-# results = model.fit()
-# print(results.summary())
-
-# df = pd.DataFrame(
-#     np.random.randn(10, 5),
-#     columns=('col %d' % i for i in range(5)))
-
-# st.table(full_health_data)
-
-
-
-
+    new_string = 'Calorie_Burnage = ' + str(new_results.params['Average_Pulse']) + ' x Average_Pulse + Duration x ' + str(new_results.params['Duration']) + ' ' + str(new_results.params['Intercept'])
+    st.write('The linear regression function can be written mathematically as:')
+    st.markdown('**' + new_string + '**')
+    st.write("""
+                _Summary - Predicting Calorie_Burnage with Average_Pulse + Duration_\n
+                    - Coefficients have a significant effect on Calorie_Burnage.\n
+                        1. Calorie_Burnage increases with 3.17 if Average_Pulse increases by one.\n
+                        2. Calorie_Burnage increases with 5.84 if Duration increases by one.\n
+                    - Average_Pulse and Duration has a relationship with Calorie_Burnage.\n
+                        1. P-value is 0.00 for Average_Pulse, Duration and the Intercept.
+                        2. The P-value is statistically significant for all of the variables, as it is less than 0.05.
+                    - The Adjusted R-squared is 0.814.\n
+                
+                ** THIS MODEL FITS THE DATA POINT WELL !!! **
+            """)
